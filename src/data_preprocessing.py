@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from pandas.api.types import is_integer_dtype, is_float_dtype, is_numeric_dtype
+
 
 TARGET_COLUMN = "y"
 
@@ -26,7 +28,7 @@ def remove_useless_columns(df) :
     """
 
     try :
-        df = df.drop(columns=["duration", "emp.var.rate", "nr.employed"])
+        df = df.drop(columns=["duration", "emp.var.rate", "nr.employed", "previous", "campaign", "day_of_week"])
     except KeyError :
         raise ValueError("Column 'duration' or column 'emp.var.rate' or column 'nr.employed' not found")
     
@@ -37,9 +39,13 @@ def feature_engineering(df) :
 
     try:
         df["contacted"] = (df["pdays"] != 999).astype(int)
+        df["previous_contacted"] = (df["previous"] > 0).astype(int)
+        df["previous_log"] = np.log1p(df["previous"])
         # df["pdays"] = df["pdays"].replace(999, -1)
+        df["campaign_capped"] = df["campaign"].clip(upper=10)
+        df["campaign_log"] = np.log1p(df["campaign_capped"])
     except KeyError:
-        raise ValueError("Column 'pdays' not found")
+        raise ValueError("Column 'pdays' or 'previous' or 'campaign' not found")
     
     return df
 
@@ -95,18 +101,23 @@ def group_data(df) :
 
 """
 
-def data_types_review(df) :
-    
+def data_types_review(df):
+    df = df.copy()
+
     for col in df.columns:
         if col == TARGET_COLUMN:
             continue
 
-        if np.issubdtype(df[col].dtype, np.integer):
+        # Numérique → optimiser le type
+        if is_integer_dtype(df[col]):
             df[col] = pd.to_numeric(df[col], downcast="integer")
-        elif np.issubdtype(df[col].dtype, np.floating):
+
+        elif is_float_dtype(df[col]):
             df[col] = pd.to_numeric(df[col], downcast="float")
-        else:
-            df[col] = df[col].astype("category")
+
+        # Tout le reste → catégoriel (en object, pas category)
+        elif not is_numeric_dtype(df[col]):
+            df[col] = df[col].astype("object")
 
     return df
 
@@ -117,7 +128,7 @@ def preprocess_features(df: pd.DataFrame) -> pd.DataFrame:
     This function is inserted inside the sklearn Pipeline via FunctionTransformer,
     so FastAPI and training use exactly the same business logic.
     """
-    df = remove_useless_columns(df)
     df = feature_engineering(df)
     df = data_types_review(df)
+    df = remove_useless_columns(df)
     return df

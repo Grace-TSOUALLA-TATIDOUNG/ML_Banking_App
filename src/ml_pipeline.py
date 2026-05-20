@@ -7,7 +7,6 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.pipeline import Pipeline
 
 from src.data_preprocessing import encode_target, preprocess_features
-
 from xgboost import XGBClassifier
 from typing import Any
 from pathlib import Path
