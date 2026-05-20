@@ -1,12 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from app.schemas.input_data import ClientData
+from app.schemas.output_data import PredictionResponse
 
 import uvicorn
 import joblib
 import pandas as pd
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Bank Marketing Prediction API",
+    description="API to predict if a Client will subscribe to a term deposit",
+    version="1.0.0"
+)
 
 pipeline = joblib.load("app/model/pipeline.pkl")
 
@@ -25,18 +30,30 @@ def health_check():
     }
 
 
-@app.post("/predict")
+@app.post("/predict", response_model=PredictionResponse)
 def predict(data: ClientData):
+    if pipeline is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Model is not loaded"
+        )
 
-    df = pd.DataFrame([data.model_dump(by_alias=True)])
+    try:
+        df = pd.DataFrame([data.model_dump(by_alias=True)])
 
-    prediction = pipeline.predict(df)[0]
-    proba = pipeline.predict_proba(df)[0][0]
+        pred = pipeline.predict(df)[0]
+        proba = pipeline.predict_proba(df)[0][1]
 
-    return {
-        "prediction": "yes" if prediction == 1 else "no",
-        "probability": float(proba)
-    }
+        return PredictionResponse(
+            prediction="yes" if pred == 1 else "no",
+            probability=float(proba)
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
