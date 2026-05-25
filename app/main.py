@@ -15,6 +15,11 @@ app = FastAPI(
 
 pipeline = joblib.load("app/model/pipeline.pkl")
 
+"""@app.on_event("startup")
+def load_model():
+    global model
+    model = joblib.load(MODEL_PATH)"""
+
 
 @app.get("/health")
 def health_check():
