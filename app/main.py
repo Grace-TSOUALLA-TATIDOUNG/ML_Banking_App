@@ -47,11 +47,11 @@ def predict(data: ClientData):
         df = pd.DataFrame([data.model_dump(by_alias=True)])
 
         pred = pipeline.predict(df)[0]
-        proba = pipeline.predict_proba(df)[0][1]
+        probas = pipeline.predict_proba(df)[0]
 
         return PredictionResponse(
             prediction="yes" if pred == 1 else "no",
-            probability=float(proba)
+            probability= probas[list(pipeline.classes_).index(pred)]
         )
 
     except Exception as e:
