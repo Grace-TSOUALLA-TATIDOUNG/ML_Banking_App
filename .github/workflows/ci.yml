@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
 
   test:
@@ -43,10 +47,6 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: test
-
-    permissions:
-      contents: read
-      packages: write
 
     steps:
 
