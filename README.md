@@ -4,11 +4,11 @@ Machine Learning API for Bank Marketing Campaign Prediction using FastAPI, Strea
 
 ---
 
-## Project Overview
+## 🎯 Project Overview
 
-This project is an end-to-end Machine Learning application built on a real-world banking marketing dataset. The objective is to predict whether a client is likely to subscribe to a term deposit based on customer demographics, campaign information, and socio-economic indicators.
+This project is an end-to-end Machine Learning application built on a real-world banking marketing dataset. **The objective is to predict whether a client is likely to subscribe to a term deposit based on customer demographics, campaign information, and socio-economic indicators.**
 
-The project covers the complete Machine Learning lifecycle, including data preprocessing, exploratory data analysis, feature engineering, model training, evaluation, deployment, and user interaction.
+The project covers the **complete Machine Learning lifecycle**, including data preprocessing, exploratory data analysis, feature engineering, model training, evaluation, deployment, and user interaction.
 
 The final solution consists of:
 
@@ -19,31 +19,72 @@ The final solution consists of:
 * CI/CD automation with GitHub Actions
 * Cloud deployment on Render
 
-The application demonstrates how a Machine Learning model can be transformed into a production-oriented solution accessible through both an API and a user-friendly interface.
+The application demonstrates how a Machine Learning model can be transformed into a **production-oriented solution accessible through both an API and a user-friendly interface.**
 
 ---
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
-```text
-| Machine Learning Workflow | Application Architecture |
-|--------------------------|---------------------------|
-| 📊 Dataset | 👤 End User |
-| ⬇️ | ⬇️ |
-| 🧹 Data Cleaning & Preprocessing | 🖥️ Streamlit Front-End |
-| ⬇️ | ⬇️ |
-| ⚙️ Feature Engineering | 🚀 FastAPI REST API |
-| ⬇️ | ⬇️ |
-| 🤖 Model Training & Evaluation | 💾 Serialized ML Model |
-| ⬇️ | ⬇️ |
-| 💾 Serialized ML Model | 📋 Prediction Result |
-```
+<!--```text -->
+<table>
+<tr>
+<td valign="top">
+
+<h3>Machine Learning Workflow</h3>
+
+<pre>
+📊 Bank Marketing Dataset
+          │
+          ▼
+🔍 Exploratory Data Analysis
+          │
+          ▼
+🧹 Data Cleaning & Preprocessing
+          │
+          ▼
+⚙️ Feature Engineering
+          │
+          ▼
+🤖 Model Training
+          │
+          ▼
+📈 Model Evaluation
+          │
+          ▼
+💾 Serialized Machine Learning Model
+</pre>
+
+</td>
+<td valign="top">
+
+<h3>Application Architecture</h3>
+
+<pre>
+👤 User
+   │
+   ▼
+🖥️ Streamlit App
+   │
+   ▼
+🚀 FastAPI API
+   │
+   ▼
+🤖 Serialized Machine Learning Model
+   │
+   ▼
+📋 Prediction
+</pre>
+
+</td>
+</tr>
+</table>
+<!--```--> 
 
 ---
 
-## Dataset
+## 📊 Dataset
 
-This project uses the Bank Marketing Dataset available on Kaggle:
+This project uses the **Bank Marketing Dataset** available on Kaggle:
 
 https://www.kaggle.com/datasets/henriqueyamahata/bank-marketing
 
@@ -64,9 +105,17 @@ https://www.kaggle.com/datasets/henriqueyamahata/bank-marketing
 
 ---
 
-## Machine Learning Workflow
+## 🧠 Machine Learning Workflow
 
-### Data Preparation
+
+### 🔍 Exploratory Data Analysis
+
+* Customer profile analysis
+* Target distribution analysis
+* Campaign effectiveness analysis
+* Feature relationship exploration
+
+### 🧹 Data Preparation
 
 * Data cleaning and preprocessing
 * Feature encoding
@@ -74,14 +123,7 @@ https://www.kaggle.com/datasets/henriqueyamahata/bank-marketing
 * Feature engineering
 * Train-test split
 
-### Exploratory Data Analysis
-
-* Customer profile analysis
-* Target distribution analysis
-* Campaign effectiveness analysis
-* Feature relationship exploration
-
-### Model Development
+### 🤖 Model Development
 
 Several Machine Learning algorithms were evaluated and compared, including:
 
@@ -89,18 +131,15 @@ Several Machine Learning algorithms were evaluated and compared, including:
 * Random Forest
 * Gradient Boosting
 * XGBoost
-* LightGBM
 * CatBoost
-* Support Vector Machine (SVM)
-* K-Nearest Neighbors (KNN)
 
-The best-performing model was selected and integrated into a reusable prediction pipeline.
+The **best-performing model(Random Forest)** was selected and integrated into a reusable prediction pipeline.
 
-### Model Evaluation
+### 📈 Model Evaluation
 
 Models were assessed using:
 
-* Accuracy
+* ROC-AUC
 * Precision
 * Recall
 * F1-Score
@@ -109,9 +148,9 @@ Models were assessed using:
 
 ---
 
-## API Development
+## 🚀 API Development
 
-The trained model is served through a REST API built with FastAPI.
+The trained model is served through a **REST API built with FastAPI.**
 
 ### Main Endpoint
 
@@ -157,12 +196,12 @@ POST /predict
 
 The API returns:
 
-* The predicted class
-* The probability associated with the prediction
+* The **predicted class**
+* The **probability associated with the prediction**
 
 ---
 
-## Interactive API Documentation
+## 📖 Interactive API Documentation
 
 The API can be tested directly through the automatically generated Swagger UI.
 
@@ -180,41 +219,35 @@ https://bank-marketing-prediction-api.onrender.com
 
 ---
 
-## Streamlit Front-End
+## 🖥️ Streamlit Front-End
 
-The project also includes a Streamlit application that provides a simple user interface for interacting with the deployed API.
+The project also includes a **Streamlit application** that provides a **simple user interface** for interacting with the deployed API.
 
 ### Features
 
-* User-friendly input form
+* **User-friendly** input form
 * Real-time prediction requests
 * Prediction result display
 * Prediction probability display
 * API integration without requiring direct API usage
 
-### Run the Front-End
-
-```bash
-streamlit run frontend/app.py
-```
-
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```text
 ML_Banking_App/
 │
 ├── app/
 │   ├── main.py
-│   ├── schemas.py
+│   ├── schemas/
 │   ├── model/
-│   └── artifacts/
+│   └── utils/
 │
-├── frontend/
-│   └── app.py
+├── web_app/
+│   └── streamlit_app.py
 │
-├── notebooks/
+├── src/
 │
 ├── tests/
 │
@@ -229,44 +262,42 @@ ML_Banking_App/
 └── data/
 ```
 
----
+### Running the Project Locally
 
-## Running the Project Locally
-
-### Clone the Repository
+#### Clone the Repository
 
 ```bash
 git clone https://github.com/<your-username>/ML_Banking_App.git
 cd ML_Banking_App
 ```
 
-### Create a Virtual Environment
+#### Create a Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-### Activate the Environment
+#### Activate the Environment
 
-#### Windows
+##### Windows
 
 ```bash
 venv\Scripts\activate
 ```
 
-#### Linux / macOS
+##### Linux / macOS
 
 ```bash
 source venv/bin/activate
 ```
 
-### Install Dependencies
+#### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run the FastAPI Application
+#### Run the FastAPI Application
 
 ```bash
 uvicorn app.main:app --reload
@@ -278,7 +309,7 @@ The API will be available at:
 http://127.0.0.1:8000
 ```
 
-Swagger documentation:
+**Swagger documentation**:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -286,7 +317,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Docker
+## 🐳 Docker
 
 ### Build the Docker Image
 
@@ -302,9 +333,9 @@ docker run -p 8000:8000 bank-marketing-api
 
 ---
 
-## CI/CD Pipeline
+## ⚙️ CI/CD Pipeline
 
-The project includes a CI/CD pipeline implemented with GitHub Actions.
+The project includes a **CI/CD pipeline** implemented with **GitHub Actions**.
 
 The workflow automatically:
 
@@ -314,11 +345,11 @@ The workflow automatically:
 4. Pushes the image to GitHub Container Registry (GHCR)
 5. Prepares the application for deployment
 
-This setup simulates a production-oriented Machine Learning deployment workflow.
+This setup simulates a **production-oriented Machine Learning deployment workflow.**
 
 ---
 
-## Deployment
+## ☁️ Deployment
 
 ### API Deployment
 
@@ -330,11 +361,11 @@ https://bank-marketing-prediction-api.onrender.com
 
 ### Container Registry
 
-Docker images are automatically published to GitHub Container Registry (GHCR) through GitHub Actions.
+**Docker images** are automatically published to **GitHub Container Registry (GHCR)** through GitHub Actions.
 
 ---
 
-## Skills Demonstrated
+## 🛠️ Skills Demonstrated
 
 * Exploratory Data Analysis (EDA)
 * Data Cleaning and Preprocessing
@@ -356,7 +387,6 @@ Docker images are automatically published to GitHub Container Registry (GHCR) th
 
 ## Future Improvements
 
-* Streamlit cloud deployment
 * Model monitoring and logging
 * Automated model retraining
 * Experiment tracking
