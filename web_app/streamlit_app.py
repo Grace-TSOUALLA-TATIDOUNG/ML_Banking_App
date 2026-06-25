@@ -159,10 +159,23 @@ payload = {
     "nr.employed": nr_employed
 }
 
-if st.button("Predict subscription"):
-    try:
-        response = requests.post(API_URL, json=payload)
+if "is_loading" not in st.session_state:
+    st.session_state.is_loading = False
 
+if st.button("Predict subscription", disabled=st.session_state.is_loading):
+    st.session_state.is_loading = True
+
+    try:
+        with st.spinner("Prediction in progress..."):
+            response = requests.post(
+                API_URL,
+                json=payload,
+                timeout=60
+            )
+
+        st.write("Status code:", response.status_code)
+        st.write("Response text:", response.text)
+        
         if response.status_code == 200:
             result = response.json()
 
@@ -179,9 +192,20 @@ if st.button("Predict subscription"):
             st.write(f"**Prediction:** {prediction}")
             st.write(f"**Probability:** {probability:.2%}")
 
-        else:
-            st.error("The API returned an error.")
+        elif response.status_code == 429:
+            st.error("Too many requests. Please wait a few seconds and try again.")
             st.write(response.text)
 
-    except requests.exceptions.RequestException:
-        st.error("Unable to connect to the API. Please check if the API is running.")
+        else:
+            st.error(f"The API returned an error: {response.status_code}")
+            st.write(response.text)
+
+    except requests.exceptions.Timeout:
+        st.error("The API took too long to respond. Please try again.")
+
+    except requests.exceptions.RequestException as e:
+        st.error("Unable to connect to the API.")
+        st.write(str(e))
+
+    finally:
+        st.session_state.is_loading = False
