@@ -1,8 +1,12 @@
+import time
 import streamlit as st
 import requests
 
 
-API_URL = "https://bank-marketing-prediction-api.onrender.com/predict"
+BASE_API_URL = "https://bank-marketing-prediction-api.onrender.com"
+HEALTH_URL = f"{BASE_API_URL}/health"
+PREDICT_URL = f"{BASE_API_URL}/predict"
+
 
 st.set_page_config(
     page_title="Bank Marketing Prediction App",
@@ -17,165 +21,181 @@ st.write(
     "to a term deposit based on client profile, campaign and economic data."
 )
 
-st.divider()
 
-st.subheader("Client information")
+def wake_up_api(max_retries=3, wait_time=5):
+    for _ in range(max_retries):
+        try:
+            response = requests.get(HEALTH_URL, timeout=30)
 
-age = st.number_input("Age", value=35)
+            if response.status_code == 200:
+                health_data = response.json()
 
-job = st.selectbox(
-    "Job",
-    [
-        "admin.",
-        "blue-collar",
-        "entrepreneur",
-        "housemaid",
-        "management",
-        "retired",
-        "self-employed",
-        "services",
-        "student",
-        "technician",
-        "unemployed",
-        "unknown"
-    ]
-)
+                if health_data.get("model_loaded") is True:
+                    return True
 
-marital = st.selectbox(
-    "Marital status",
-    ["divorced", "married", "single", "unknown"]
-)
+        except requests.exceptions.RequestException:
+            pass
 
-education = st.selectbox(
-    "Education",
-    [
-        "basic.4y",
-        "basic.6y",
-        "basic.9y",
-        "high.school",
-        "illiterate",
-        "professional.course",
-        "university.degree",
-        "unknown"
-    ]
-)
+        time.sleep(wait_time)
 
-default = st.selectbox("Has credit in default?", ["no", "yes", "unknown"])
-housing = st.selectbox("Has housing loan?", ["no", "yes", "unknown"])
-loan = st.selectbox("Has personal loan?", ["no", "yes", "unknown"])
+    return False
 
-st.divider()
 
-st.subheader("Campaign information")
+def call_api_with_retry(payload, max_retries=3, wait_time=5):
+    response = None
 
-contact = st.selectbox("Contact communication type", ["cellular", "telephone"])
+    for _ in range(max_retries):
+        response = requests.post(
+            PREDICT_URL,
+            json=payload,
+            timeout=60
+        )
 
-month = st.selectbox(
-    "Last contact month",
-    ["mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
-)
+        if response.status_code != 429:
+            return response
 
-day_of_week = st.selectbox(
-    "Last contact day of the week",
-    ["mon", "tue", "wed", "thu", "fri"]
-)
+        time.sleep(wait_time)
 
-duration = st.number_input(
-    "Last contact duration in seconds",
-    value=180
-)
+    return response
 
-campaign = st.number_input(
-    "Number of contacts during this campaign",
-    value=2
-)
 
-pdays = st.number_input(
-    "Days since the client was last contacted (999 if not)",
-    value=999
-)
+if "last_request_time" not in st.session_state:
+    st.session_state.last_request_time = 0
 
-previous = st.number_input(
-    "Number of contacts before this campaign",
-    value=0
-)
 
-poutcome = st.selectbox(
-    "Outcome of the previous campaign",
-    ["failure", "nonexistent", "success"]
-)
+with st.form("prediction_form"):
 
-st.divider()
+    st.divider()
+    st.subheader("Client information")
 
-st.subheader("Economic context")
+    age = st.number_input("Age", value=35)
 
-emp_var_rate = st.number_input(
-    "Employment variation rate",
-    value=1.1
-)
+    job = st.selectbox(
+        "Job",
+        [
+            "admin.", "blue-collar", "entrepreneur", "housemaid",
+            "management", "retired", "self-employed", "services",
+            "student", "technician", "unemployed", "unknown"
+        ]
+    )
 
-cons_price_idx = st.number_input(
-    "Consumer price index",
-    value=93.994
-)
+    marital = st.selectbox(
+        "Marital status",
+        ["divorced", "married", "single", "unknown"]
+    )
 
-cons_conf_idx = st.number_input(
-    "Consumer confidence index",
-    value=-36.4
-)
+    education = st.selectbox(
+        "Education",
+        [
+            "basic.4y", "basic.6y", "basic.9y", "high.school",
+            "illiterate", "professional.course", "university.degree", "unknown"
+        ]
+    )
 
-euribor3m = st.number_input(
-    "Euribor 3 month rate",
-    value=4.857
-)
+    default = st.selectbox("Has credit in default?", ["no", "yes", "unknown"])
+    housing = st.selectbox("Has housing loan?", ["no", "yes", "unknown"])
+    loan = st.selectbox("Has personal loan?", ["no", "yes", "unknown"])
 
-nr_employed = st.number_input(
-    "Number of employees",
-    value=5191.0
-)
+    st.divider()
+    st.subheader("Campaign information")
 
-st.divider()
+    contact = st.selectbox("Contact communication type", ["cellular", "telephone"])
 
-payload = {
-    "age": age,
-    "job": job,
-    "marital": marital,
-    "education": education,
-    "default": default,
-    "housing": housing,
-    "loan": loan,
-    "contact": contact,
-    "month": month,
-    "day_of_week": day_of_week,
-    "duration": duration,
-    "campaign": campaign,
-    "pdays": pdays,
-    "previous": previous,
-    "poutcome": poutcome,
-    "emp.var.rate": emp_var_rate,
-    "cons.price.idx": cons_price_idx,
-    "cons.conf.idx": cons_conf_idx,
-    "euribor3m": euribor3m,
-    "nr.employed": nr_employed
-}
+    month = st.selectbox(
+        "Last contact month",
+        ["mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    )
 
-if "is_loading" not in st.session_state:
-    st.session_state.is_loading = False
+    day_of_week = st.selectbox(
+        "Last contact day of the week",
+        ["mon", "tue", "wed", "thu", "fri"]
+    )
 
-if st.button("Predict subscription", disabled=st.session_state.is_loading):
-    st.session_state.is_loading = True
+    duration = st.number_input("Last contact duration in seconds", value=180)
+
+    campaign = st.number_input(
+        "Number of contacts during this campaign",
+        value=2
+    )
+
+    pdays = st.number_input(
+        "Days since the client was last contacted (999 if not)",
+        value=999
+    )
+
+    previous = st.number_input(
+        "Number of contacts before this campaign",
+        value=0
+    )
+
+    poutcome = st.selectbox(
+        "Outcome of the previous campaign",
+        ["failure", "nonexistent", "success"]
+    )
+
+    st.divider()
+    st.subheader("Economic context")
+
+    emp_var_rate = st.number_input("Employment variation rate", value=1.1)
+    cons_price_idx = st.number_input("Consumer price index", value=93.994)
+    cons_conf_idx = st.number_input("Consumer confidence index", value=-36.4)
+    euribor3m = st.number_input("Euribor 3 month rate", value=4.857)
+    nr_employed = st.number_input("Number of employees", value=5191.0)
+
+    submitted = st.form_submit_button("Predict subscription")
+
+
+if submitted:
+    cooldown = 10
+    now = time.time()
+
+    if now - st.session_state.last_request_time < cooldown:
+        st.warning("Please wait a few seconds before trying again.")
+        st.stop()
+
+    st.session_state.last_request_time = now
+
+    payload = {
+        "age": age,
+        "job": job,
+        "marital": marital,
+        "education": education,
+        "default": default,
+        "housing": housing,
+        "loan": loan,
+        "contact": contact,
+        "month": month,
+        "day_of_week": day_of_week,
+        "duration": duration,
+        "campaign": campaign,
+        "pdays": pdays,
+        "previous": previous,
+        "poutcome": poutcome,
+        "emp.var.rate": emp_var_rate,
+        "cons.price.idx": cons_price_idx,
+        "cons.conf.idx": cons_conf_idx,
+        "euribor3m": euribor3m,
+        "nr.employed": nr_employed
+    }
 
     try:
-        with st.spinner("Prediction in progress..."):
-            response = requests.post(
-                API_URL,
-                json=payload,
-                timeout=60
-            )
+        with st.spinner("Starting prediction service..."):
+            api_ready = wake_up_api()
 
-        st.write("Status code:", response.status_code)
-        st.write("Response text:", response.text)
-        
+        if not api_ready:
+            st.warning(
+                "The prediction service is starting up. "
+                "Please wait a few seconds and try again."
+            )
+            st.stop()
+
+        with st.spinner("Prediction in progress..."):
+            response = call_api_with_retry(payload)
+
+        if response is None:
+            st.error("The prediction service did not return a response.")
+            st.stop()
+
         if response.status_code == 200:
             result = response.json()
 
@@ -193,19 +213,26 @@ if st.button("Predict subscription", disabled=st.session_state.is_loading):
             st.write(f"**Probability:** {probability:.2%}")
 
         elif response.status_code == 429:
-            st.error("Too many requests. Please wait a few seconds and try again.")
-            st.write(response.text)
+            st.warning(
+                "The prediction service is temporarily busy. "
+                "Please wait a few seconds and try again."
+            )
+
+        elif response.status_code == 503:
+            st.warning(
+                "The prediction model is still loading. "
+                "Please wait a few seconds and try again."
+            )
 
         else:
-            st.error(f"The API returned an error: {response.status_code}")
-            st.write(response.text)
+            st.error("The prediction service returned an error.")
+            st.write(f"Status code: {response.status_code}")
 
     except requests.exceptions.Timeout:
         st.error("The API took too long to respond. Please try again.")
 
-    except requests.exceptions.RequestException as e:
-        st.error("Unable to connect to the API.")
-        st.write(str(e))
-
-    finally:
-        st.session_state.is_loading = False
+    except requests.exceptions.RequestException:
+        st.error(
+            "Unable to connect to the prediction API. "
+            "The service may be starting up."
+        )
