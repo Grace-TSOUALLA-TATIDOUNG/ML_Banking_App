@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific files
+
+# Ignore Catboost infos
+catboost_info/
+
+# Ignore model performances
+app/model/metrics.json
+
+app/model/model_comparison.csv

@@ -10,10 +10,23 @@ from src.data_preprocessing import encode_target, preprocess_features
 from xgboost import XGBClassifier
 from typing import Any
 from pathlib import Path
+from catboost import CatBoostClassifier
 
 import pandas as pd
 import joblib
 import json
+
+categorical_features = [
+    "job",
+    "marital",
+    "education",
+    "default",
+    "housing",
+    "loan",
+    "contact",
+    "month",
+    "poutcome"
+]
 
 
 def data_split(df: pd.DataFrame) :
@@ -59,15 +72,24 @@ def create_preprocessor() -> ColumnTransformer:
     )
 
 
-def create_pipeline(model) -> Pipeline:
+def create_pipeline(model, model_name) -> Pipeline:
     """Create a full production-ready pipeline: business preprocessing + encoding + model."""
-    return Pipeline(
+
+    if model_name == "catboost" :
+        return Pipeline(
         steps=[
             ("business_preprocessing", FunctionTransformer(preprocess_features, validate=False)),
-            ("preprocessor", create_preprocessor()),
             ("model", model),
         ]
     )
+    else :
+        return Pipeline(
+            steps=[
+                ("business_preprocessing", FunctionTransformer(preprocess_features, validate=False)),
+                ("preprocessor", create_preprocessor()),
+                ("model", model),
+            ]
+        )
 
 
 
@@ -77,6 +99,15 @@ def define_models(scale_pos_weight: float) -> dict[str, dict[str, Any]]:
     Parameters are prefixed with model__ because the estimator is inside a Pipeline.
     """
     models_and_params: dict[str, dict[str, Any]] = {
+
+        "catboost": {
+            "model": CatBoostClassifier(random_state=42),
+            "params": {
+                "model__iterations": [250, 500, 700, 1000],
+                "model__learning_rate": [0.01, 0.03, 0.05, 0.1, 0.5],
+                "model__depth": [,3, 5, 7, 10],
+            },
+        },
         "logistic_regression": {
             "model": LogisticRegression(solver="liblinear", random_state=42),
             "params": {
@@ -138,7 +169,7 @@ def model_selection_and_training(
     print("Exécution de la comparaison des pipelines...")
 
     for model_name, config in models_dict.items():
-        pipeline = create_pipeline(config["model"])
+        pipeline = create_pipeline(config["model"], model_name)
 
         search = RandomizedSearchCV(
             estimator=pipeline,
@@ -152,7 +183,14 @@ def model_selection_and_training(
             random_state=42,
         )
 
-        search.fit(train_data, train_targets)
+        if model_name == "catboost":
+            search.fit(
+                train_data,
+                train_targets,
+                model__cat_features=categorical_features
+            )
+        else:
+            search.fit(train_data, train_targets)
 
         results.append(
             {
