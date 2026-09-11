@@ -1,5 +1,5 @@
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV, train_test_split
-from sklearn.linear_model import LogisticRegression
+#from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, roc_auc_score
 from sklearn.compose import ColumnTransformer, make_column_selector as selector
@@ -101,19 +101,11 @@ def define_models(scale_pos_weight: float) -> dict[str, dict[str, Any]]:
     models_and_params: dict[str, dict[str, Any]] = {
 
         "catboost": {
-            "model": CatBoostClassifier(random_state=42),
+            "model": CatBoostClassifier(random_state=42, auto_class_weights='Balanced'),
             "params": {
                 "model__iterations": [250, 500, 700, 1000],
                 "model__learning_rate": [0.01, 0.03, 0.05, 0.1, 0.5],
-                "model__depth": [,3, 5, 7, 10],
-            },
-        },
-        "logistic_regression": {
-            "model": LogisticRegression(solver="liblinear", random_state=42),
-            "params": {
-                "model__max_iter": [3000, 3500],
-                "model__C": [0.001, 0.01, 0.1, 1, 10, 100],
-                "model__class_weight": [None, "balanced"],
+                "model__depth": [3, 5, 7, 10],
             },
         },
         "random_forest": {
