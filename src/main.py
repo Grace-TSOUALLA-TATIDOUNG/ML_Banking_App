@@ -36,6 +36,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     bank_df = dp.read_data(args.data_path)
+    bank_df = dp.preprocess_features(bank_df)
     X_train, X_test, y_train, y_test = data_split(bank_df)
 
     neg = (y_train == 0).sum()

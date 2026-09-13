@@ -1,12 +1,11 @@
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV, train_test_split
-#from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, roc_auc_score
 from sklearn.compose import ColumnTransformer, make_column_selector as selector
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 
-from src.data_preprocessing import encode_target, preprocess_features
+from src.data_preprocessing import encode_target
 from xgboost import XGBClassifier
 from typing import Any
 from pathlib import Path
@@ -78,16 +77,14 @@ def create_pipeline(model, model_name) -> Pipeline:
     if model_name == "catboost" :
         return Pipeline(
         steps=[
-            ("business_preprocessing", FunctionTransformer(preprocess_features, validate=False)),
-            ("model", model),
+            ("model", model)
         ]
     )
     else :
         return Pipeline(
             steps=[
-                ("business_preprocessing", FunctionTransformer(preprocess_features, validate=False)),
                 ("preprocessor", create_preprocessor()),
-                ("model", model),
+                ("model", model)
             ]
         )
 
@@ -101,29 +98,21 @@ def define_models(scale_pos_weight: float) -> dict[str, dict[str, Any]]:
     models_and_params: dict[str, dict[str, Any]] = {
 
         "catboost": {
-            "model": CatBoostClassifier(random_state=42, auto_class_weights='Balanced'),
+            "model": CatBoostClassifier(random_state=42, auto_class_weights='Balanced', thread_count=1, verbose=0, allow_writing_files=False),
             "params": {
                 "model__iterations": [250, 500, 700, 1000],
                 "model__learning_rate": [0.01, 0.03, 0.05, 0.1, 0.5],
-                "model__depth": [3, 5, 7, 10],
-            },
+                "model__depth": [3, 5, 7, 10]
+            }
         },
         "random_forest": {
             "model": RandomForestClassifier(random_state=42),
             "params": {
                 "model__n_estimators": [250, 500, 700, 1000],
                 "model__max_depth": [3, 5, 7, 10, 12],
-                "model__class_weight": ["balanced", "balanced_subsample"],
-            },
-        },
-        "gradient_boosting": {
-            "model": GradientBoostingClassifier(random_state=42),
-            "params": {
-                "model__n_estimators": [250, 500, 700, 1000],
-                "model__learning_rate": [0.01, 0.05, 0.1, 0.5, 1],
-                "model__max_depth": [3, 5, 7, 10, 12],
-            },
-        },
+                "model__class_weight": ["balanced", "balanced_subsample"]
+            }
+        }
     }
 
     if XGBClassifier is not None:
@@ -133,12 +122,13 @@ def define_models(scale_pos_weight: float) -> dict[str, dict[str, Any]]:
                 random_state=42,
                 scale_pos_weight=scale_pos_weight,
                 eval_metric="logloss",
+                n_jobs=1
             ),
             "params": {
                 "model__n_estimators": [250, 500, 700, 1000],
                 "model__learning_rate": [0.01, 0.05, 0.1, 0.5, 1],
-                "model__max_depth": [3, 5, 7, 10, 12],
-            },
+                "model__max_depth": [3, 5, 7, 10, 12]
+            }
         }
 
     return models_and_params
@@ -173,6 +163,7 @@ def model_selection_and_training(
             verbose=2,
             refit=True,
             random_state=42,
+            return_train_score=True
         )
 
         if model_name == "catboost":
@@ -184,13 +175,17 @@ def model_selection_and_training(
         else:
             search.fit(train_data, train_targets)
 
-        results.append(
-            {
-                "model": model_name,
-                "best_cv_score": search.best_score_,
-                "best_params": search.best_params_,
-            }
-        )
+        best_idx = search.best_index_
+        train_score = search.cv_results_["mean_train_score"][best_idx]
+        cv_score = search.cv_results_["mean_test_score"][best_idx]
+
+        results.append({
+            "model": model_name,
+            "best_cv_score": cv_score,
+            "train_score": train_score,
+            "overfit_gap": train_score - cv_score,
+            "best_params": search.best_params_,
+        })
         best_estimators[model_name] = search.best_estimator_
 
     results_df = pd.DataFrame(results).sort_values(by="best_cv_score", ascending=False)

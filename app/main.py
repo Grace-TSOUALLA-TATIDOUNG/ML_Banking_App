@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from app.schemas.input_data import ClientData
 from app.schemas.output_data import PredictionResponse
+from src.data_preprocessing import preprocess_features
 
 import uvicorn
 import joblib
@@ -45,6 +46,7 @@ def predict(data: ClientData):
 
     try:
         df = pd.DataFrame([data.model_dump(by_alias=True)])
+        df = preprocess_features(df)
 
         pred = pipeline.predict(df)[0]
         probas = pipeline.predict_proba(df)[0]
