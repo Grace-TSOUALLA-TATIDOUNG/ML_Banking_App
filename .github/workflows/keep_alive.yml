@@ -1,0 +1,16 @@
+# .github/workflows/keep-alive.yml
+name: Keep API and Streamlit alive
+
+on:
+  schedule:
+    - cron: '*/12 6-18 * * 1-5'  # 8h-20h Paris (UTC+2) → 6h-18h UTC, lun-ven
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API
+        run: curl -s https://bank-marketing-prediction-api.onrender.com/health
+
+      - name: Ping Streamlit
+        run: curl -s https://bank-marketing-streamlit-app.onrender.com

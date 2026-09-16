@@ -7,6 +7,12 @@ BASE_API_URL = "https://bank-marketing-prediction-api.onrender.com"
 HEALTH_URL = f"{BASE_API_URL}/health"
 PREDICT_URL = f"{BASE_API_URL}/predict"
 
+if "wake_up_triggered" not in st.session_state:
+    st.session_state.wake_up_triggered = True
+    try:
+        requests.get(HEALTH_URL, timeout=3)  # fire-and-forget, non bloquant
+    except requests.exceptions.RequestException:
+        pass
 
 st.set_page_config(
     page_title="Bank Marketing Prediction App",
@@ -22,22 +28,15 @@ st.write(
 )
 
 
-def wake_up_api(max_retries=3, wait_time=5):
+def wake_up_api(max_retries=6, wait_time=10):
     for _ in range(max_retries):
         try:
-            response = requests.get(HEALTH_URL, timeout=30)
-
-            if response.status_code == 200:
-                health_data = response.json()
-
-                if health_data.get("model_loaded") is True:
-                    return True
-
+            response = requests.get(HEALTH_URL, timeout=10)
+            if response.status_code == 200 and response.json().get("model_loaded"):
+                return True
         except requests.exceptions.RequestException:
             pass
-
         time.sleep(wait_time)
-
     return False
 
 
