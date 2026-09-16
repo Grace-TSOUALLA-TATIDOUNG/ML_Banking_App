@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping API
-        run: curl -sS -w '\nStatus: %{http_code}\n' https://bank-marketing-prediction-api.onrender.com/health
+        run: |
+          curl -sS -w '\nStatus: %{http_code}\n' https://bank-marketing-prediction-api.onrender.com/health
 
       - name: Ping Streamlit
-        run: curl -sS -w '\nStatus: %{http_code}\n' https://bank-marketing-streamlit-app.onrender.com
+        run: |
+          curl -sS -w '\nStatus: %{http_code}\n' https://bank-marketing-streamlit-app.onrender.com
